@@ -1,0 +1,131 @@
+<div id="lorevault-settings">
+    <div class="inline-drawer">
+        <div class="inline-drawer-header">
+            <b>LoreVault</b>
+            <span class="lorevault-tier-badge free" id="lorevault-tier-badge">FREE</span>
+            <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <!-- Connection Status -->
+            <div class="lorevault-status">
+                <div class="lorevault-status-indicator" id="lorevault-status-indicator"></div>
+                <span id="lorevault-status-text">Not connected</span>
+            </div>
+
+            <!-- Registration Form (shown when no API key) -->
+            <div id="lorevault-register-section">
+                <div class="lorevault-form-group">
+                    <label for="lorevault-email">Email Address</label>
+                    <input type="email" id="lorevault-email" placeholder="your@email.com">
+                </div>
+                <button class="lorevault-btn lorevault-btn-primary" id="lorevault-register-btn">
+                    Generate API Key
+                </button>
+            </div>
+
+            <!-- Connected Section (shown when API key exists) -->
+            <div id="lorevault-connected-section" style="display: none;">
+                <!-- API Key Display -->
+                <div class="lorevault-form-group">
+                    <label>API Key</label>
+                    <div class="lorevault-api-key-container">
+                        <input type="text" id="lorevault-api-key" readonly>
+                        <button class="lorevault-copy-btn" id="lorevault-copy-btn" title="Copy to clipboard">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Enable/Disable Toggle -->
+                <div class="lorevault-toggle">
+                    <label class="lorevault-toggle-switch">
+                        <input type="checkbox" id="lorevault-enabled" checked>
+                        <span class="lorevault-toggle-slider"></span>
+                    </label>
+                    <span>Enable LoreVault</span>
+                </div>
+
+                <!-- Storage Bar -->
+                <div class="lorevault-storage-bar">
+                    <div class="lorevault-storage-bar-label">
+                        <span>Storage Used</span>
+                        <span id="lorevault-storage-text">0 MB / 100 MB</span>
+                    </div>
+                    <div class="lorevault-storage-bar-track">
+                        <div class="lorevault-storage-bar-fill" id="lorevault-storage-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="lorevault-stats">
+                    <div class="lorevault-stat">
+                        <div class="lorevault-stat-value" id="lorevault-events-count">0</div>
+                        <div class="lorevault-stat-label">Events Stored</div>
+                    </div>
+                    <div class="lorevault-stat">
+                        <div class="lorevault-stat-value" id="lorevault-tokens-saved">0</div>
+                        <div class="lorevault-stat-label">Tokens Saved</div>
+                    </div>
+                    <div class="lorevault-stat">
+                        <div class="lorevault-stat-value" id="lorevault-messages-count">0</div>
+                        <div class="lorevault-stat-label">Messages Processed</div>
+                    </div>
+                    <div class="lorevault-stat">
+                        <div class="lorevault-stat-value" id="lorevault-chats-count">0</div>
+                        <div class="lorevault-stat-label">Active Chats</div>
+                    </div>
+                </div>
+
+                <!-- Token Budget Slider -->
+                <div class="lorevault-slider-container">
+                    <label for="lorevault-token-budget">Context Token Budget</label>
+                    <input type="range" id="lorevault-token-budget" min="500" max="2000" step="100" value="1000">
+                    <div class="lorevault-slider-value"><span id="lorevault-token-budget-value">1000</span> tokens</div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="lorevault-btn-group">
+                    <button class="lorevault-btn lorevault-btn-secondary" id="lorevault-test-btn">
+                        <i class="fa-solid fa-plug"></i> Test Connection
+                    </button>
+                    <button class="lorevault-btn lorevault-btn-secondary" id="lorevault-refresh-btn">
+                        <i class="fa-solid fa-rotate"></i> Refresh Stats
+                    </button>
+                </div>
+
+                <!-- Import Chat Button -->
+                <button class="lorevault-btn lorevault-btn-import" id="lorevault-import-btn">
+                    <i class="fa-solid fa-file-import"></i> Import Current Chat
+                </button>
+                <div id="lorevault-import-progress" class="lorevault-import-progress" style="display: none;">
+                    <div class="lorevault-import-progress-text">Importing... <span id="lorevault-import-count">0</span> messages</div>
+                    <div class="lorevault-import-progress-bar">
+                        <div class="lorevault-import-progress-fill" id="lorevault-import-fill"></div>
+                    </div>
+                </div>
+
+                <!-- Upgrade Button (hidden during beta) -->
+                <!-- <button class="lorevault-btn lorevault-btn-upgrade" id="lorevault-upgrade-btn">
+                    <i class="fa-solid fa-crown"></i> Upgrade to Pro
+                </button> -->
+                <div class="lorevault-beta-notice" id="lorevault-beta-notice">
+                    <i class="fa-solid fa-flask"></i> Beta - Contact for Pro access
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="lorevault-danger-zone">
+                    <div class="lorevault-danger-header">Danger Zone</div>
+                    <button class="lorevault-btn lorevault-btn-danger-secondary" id="lorevault-delete-chat-btn">
+                        <i class="fa-solid fa-eraser"></i> Delete Current Chat Memory
+                    </button>
+                    <button class="lorevault-btn lorevault-btn-danger" id="lorevault-delete-all-btn">
+                        <i class="fa-solid fa-trash"></i> Delete All My Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Message Area -->
+            <div id="lorevault-message-area"></div>
+        </div>
+    </div>
+</div>

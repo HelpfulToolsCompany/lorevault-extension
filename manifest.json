@@ -1,0 +1,12 @@
+{
+    "display_name": "LoreVault",
+    "loading_order": 100,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "LoreVault",
+    "version": "1.1.0",
+    "homePage": "https://github.com/HelpfulToolsCompany/lorevault-extension",
+    "auto_update": true
+}

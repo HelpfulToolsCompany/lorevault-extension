@@ -1,0 +1,453 @@
+/* LoreVault Extension Styles */
+
+#lorevault-settings {
+    padding: 10px;
+}
+
+#lorevault-settings .inline-drawer-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 10px;
+    background: var(--SmartThemeBotMesBlurTintColor);
+    border-radius: 5px;
+}
+
+#lorevault-settings .inline-drawer-header h4 {
+    margin: 0;
+    flex-grow: 1;
+}
+
+#lorevault-settings .inline-drawer-content {
+    padding: 15px 10px;
+}
+
+/* Connection status indicator */
+.lorevault-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    background: var(--SmartThemeBlurTintColor);
+}
+
+.lorevault-status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #888;
+}
+
+.lorevault-status-indicator.connected {
+    background: #4CAF50;
+    box-shadow: 0 0 8px #4CAF50;
+}
+
+.lorevault-status-indicator.disconnected {
+    background: #f44336;
+    box-shadow: 0 0 8px #f44336;
+}
+
+.lorevault-status-indicator.loading {
+    background: #FFC107;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Form elements */
+.lorevault-form-group {
+    margin-bottom: 15px;
+}
+
+.lorevault-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.lorevault-form-group input[type="text"],
+.lorevault-form-group input[type="email"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 4px;
+    background: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
+}
+
+.lorevault-form-group input[readonly] {
+    opacity: 0.8;
+    cursor: default;
+}
+
+/* API Key display */
+.lorevault-api-key-container {
+    display: flex;
+    gap: 8px;
+}
+
+.lorevault-api-key-container input {
+    flex-grow: 1;
+    font-family: monospace;
+}
+
+.lorevault-copy-btn {
+    padding: 8px 12px;
+    background: var(--SmartThemeQuoteColor);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--SmartThemeBodyColor);
+}
+
+.lorevault-copy-btn:hover {
+    opacity: 0.8;
+}
+
+/* Storage bar */
+.lorevault-storage-bar {
+    margin: 15px 0;
+}
+
+.lorevault-storage-bar-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.lorevault-storage-bar-track {
+    height: 8px;
+    background: var(--SmartThemeBlurTintColor);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.lorevault-storage-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.lorevault-storage-bar-fill.warning {
+    background: linear-gradient(90deg, #FFC107, #FF9800);
+}
+
+.lorevault-storage-bar-fill.danger {
+    background: linear-gradient(90deg, #f44336, #E91E63);
+}
+
+/* Stats display */
+.lorevault-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.lorevault-stat {
+    padding: 10px;
+    background: var(--SmartThemeBlurTintColor);
+    border-radius: 5px;
+    text-align: center;
+}
+
+.lorevault-stat-value {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--SmartThemeQuoteColor);
+}
+
+.lorevault-stat-label {
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+/* Buttons */
+.lorevault-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.lorevault-btn-primary {
+    background: var(--SmartThemeQuoteColor);
+    color: var(--SmartThemeBodyColor);
+}
+
+.lorevault-btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.lorevault-btn-secondary {
+    background: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+}
+
+.lorevault-btn-secondary:hover {
+    background: var(--SmartThemeBorderColor);
+}
+
+.lorevault-btn-upgrade {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.lorevault-btn-upgrade:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* Toggle switch */
+.lorevault-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.lorevault-toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 26px;
+}
+
+.lorevault-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.lorevault-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--SmartThemeBlurTintColor);
+    transition: 0.4s;
+    border-radius: 26px;
+}
+
+.lorevault-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+.lorevault-toggle-switch input:checked + .lorevault-toggle-slider {
+    background-color: #4CAF50;
+}
+
+.lorevault-toggle-switch input:checked + .lorevault-toggle-slider:before {
+    transform: translateX(24px);
+}
+
+/* Token budget slider */
+.lorevault-slider-container {
+    margin: 15px 0;
+}
+
+.lorevault-slider-container label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.lorevault-slider-container input[type="range"] {
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.lorevault-slider-value {
+    text-align: center;
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+/* Button group */
+.lorevault-btn-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.lorevault-btn-group .lorevault-btn {
+    flex: 1;
+}
+
+/* Tier badge */
+.lorevault-tier-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.lorevault-tier-badge.free {
+    background: #607D8B;
+    color: white;
+}
+
+.lorevault-tier-badge.pro {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.lorevault-tier-badge.premium {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+/* Registration form */
+.lorevault-register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lorevault-register-form input {
+    padding: 10px 12px;
+}
+
+/* Messages */
+.lorevault-message {
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    font-size: 0.9em;
+}
+
+.lorevault-message.success {
+    background: rgba(76, 175, 80, 0.2);
+    border: 1px solid #4CAF50;
+}
+
+.lorevault-message.error {
+    background: rgba(244, 67, 54, 0.2);
+    border: 1px solid #f44336;
+}
+
+.lorevault-message.info {
+    background: rgba(33, 150, 243, 0.2);
+    border: 1px solid #2196F3;
+}
+
+/* Beta notice */
+.lorevault-beta-notice {
+    padding: 10px;
+    margin-top: 10px;
+    background: rgba(156, 39, 176, 0.15);
+    border: 1px solid #9C27B0;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 0.9em;
+    color: #CE93D8;
+}
+
+/* Danger zone */
+.lorevault-danger-zone {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #f44336;
+    border-radius: 5px;
+    background: rgba(244, 67, 54, 0.05);
+}
+
+.lorevault-danger-header {
+    font-weight: bold;
+    color: #f44336;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+}
+
+.lorevault-btn-danger-secondary {
+    background: transparent;
+    color: #ff9800;
+    border: 1px solid #ff9800;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.lorevault-btn-danger-secondary:hover {
+    background: #ff9800;
+    color: white;
+}
+
+.lorevault-btn-danger {
+    background: transparent;
+    color: #f44336;
+    border: 1px solid #f44336;
+    width: 100%;
+}
+
+.lorevault-btn-danger:hover {
+    background: #f44336;
+    color: white;
+}
+
+/* Import button */
+.lorevault-btn-import {
+    width: 100%;
+    margin-top: 10px;
+    background: linear-gradient(135deg, #2196F3 0%, #00BCD4 100%);
+    color: white;
+}
+
+.lorevault-btn-import:hover {
+    background: linear-gradient(135deg, #00BCD4 0%, #2196F3 100%);
+}
+
+.lorevault-btn-import:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Import progress */
+.lorevault-import-progress {
+    margin-top: 10px;
+    padding: 10px;
+    background: var(--SmartThemeBlurTintColor);
+    border-radius: 5px;
+}
+
+.lorevault-import-progress-text {
+    margin-bottom: 8px;
+    font-size: 0.9em;
+}
+
+.lorevault-import-progress-bar {
+    height: 8px;
+    background: var(--SmartThemeBorderColor);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.lorevault-import-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2196F3, #00BCD4);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
