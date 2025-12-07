@@ -249,10 +249,12 @@ function getCurrentCharacterName() {
 }
 
 // Get recent messages as a single context string for v1.1 API
+// Truncates to 4500 chars to stay within API limit (5000)
 function getRecentContext(count = 5) {
     const context = getContext();
     const chat = context.chat || [];
-    return chat.slice(-count).map(msg => msg.mes || '').join('\n\n');
+    const combined = chat.slice(-count).map(msg => msg.mes || '').join('\n\n');
+    return combined.slice(0, 4500);
 }
 
 // Get current message ID (chat length)
