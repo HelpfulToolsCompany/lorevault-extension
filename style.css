@@ -451,3 +451,59 @@
     border-radius: 4px;
     transition: width 0.3s ease;
 }
+
+/* Legal agreement checkbox */
+.lorevault-legal-agreement {
+    margin: 15px 0;
+    padding: 10px;
+    background: var(--SmartThemeBlurTintColor);
+    border-radius: 5px;
+}
+
+.lorevault-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.lorevault-checkbox-label input[type="checkbox"] {
+    margin-top: 3px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.lorevault-checkbox-label a {
+    color: var(--SmartThemeQuoteColor);
+    text-decoration: underline;
+}
+
+.lorevault-checkbox-label a:hover {
+    opacity: 0.8;
+}
+
+/* Legal links footer */
+.lorevault-legal-footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--SmartThemeBorderColor);
+    text-align: center;
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+.lorevault-legal-footer a {
+    color: var(--SmartThemeBodyColor);
+    text-decoration: none;
+}
+
+.lorevault-legal-footer a:hover {
+    text-decoration: underline;
+}
+
+.lorevault-legal-footer span {
+    margin: 0 8px;
+}

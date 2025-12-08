@@ -599,6 +599,11 @@ jQuery(async () => {
             showMessage('error', 'Please enter your email address');
             return;
         }
+        const agreedToTerms = $('#lorevault-agree-terms').is(':checked');
+        if (!agreedToTerms) {
+            showMessage('error', 'Please agree to the Terms of Service and Privacy Policy');
+            return;
+        }
         await registerUser(email);
     });
 
