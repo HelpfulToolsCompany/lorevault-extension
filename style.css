@@ -507,3 +507,46 @@
 .lorevault-legal-footer span {
     margin: 0 8px;
 }
+
+/* Rate limit warning banner */
+.lorevault-rate-limit-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    background: rgba(255, 152, 0, 0.15);
+    border: 1px solid #FF9800;
+    border-radius: 5px;
+    font-size: 0.9em;
+    color: #FFB74D;
+}
+
+.lorevault-rate-limit-banner i:first-child {
+    font-size: 1.2em;
+    color: #FF9800;
+}
+
+.lorevault-rate-limit-banner span {
+    flex: 1;
+}
+
+.lorevault-banner-close {
+    background: none;
+    border: none;
+    color: #FFB74D;
+    cursor: pointer;
+    padding: 5px;
+    opacity: 0.7;
+}
+
+.lorevault-banner-close:hover {
+    opacity: 1;
+}
+
+/* Warning message type */
+.lorevault-message.warning {
+    background: rgba(255, 152, 0, 0.2);
+    border: 1px solid #FF9800;
+    color: #FFB74D;
+}

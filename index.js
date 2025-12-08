@@ -26,6 +26,9 @@ let sessionStats = {
     messagesSent: 0,
 };
 
+// Track rate limit warnings (don't spam user)
+let rateLimitWarningShown = false;
+
 // Load settings from SillyTavern storage
 async function loadSettings() {
     extension_settings[extensionName] = extension_settings[extensionName] || {};
@@ -101,6 +104,29 @@ function showMessage(type, message) {
     const messageArea = $('#lorevault-message-area');
     messageArea.html(`<div class="lorevault-message ${type}">${message}</div>`);
     setTimeout(() => messageArea.html(''), 5000);
+}
+
+// Show rate limit warning banner
+function showRateLimitWarning() {
+    // Show persistent warning in settings panel
+    const warningHtml = `
+        <div class="lorevault-rate-limit-banner" id="lorevault-rate-limit-banner">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Daily limit reached! Memory storage paused. Existing memories still work.</span>
+            <button class="lorevault-banner-close" onclick="this.parentElement.remove()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    `;
+
+    // Insert at top of connected section
+    const connectedSection = $('#lorevault-connected-section');
+    if (connectedSection.length && !$('#lorevault-rate-limit-banner').length) {
+        connectedSection.prepend(warningHtml);
+    }
+
+    // Also show a toast notification
+    showMessage('warning', 'Daily event limit reached. New memories won\'t be stored until tomorrow.');
 }
 
 // Format bytes to human readable
@@ -287,11 +313,35 @@ async function ingestMessages(messages) {
     if (!chatId) return;
 
     try {
-        const result = await apiCall('ingest', 'POST', {
-            chat_id: chatId,
-            messages: messages,
+        const response = await fetch(`${settings.apiBase}/ingest`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'x-api-key': settings.apiKey,
+            },
+            body: JSON.stringify({
+                chat_id: chatId,
+                messages: messages,
+            }),
         });
 
+        // Handle rate limit (402)
+        if (response.status === 402) {
+            if (!rateLimitWarningShown) {
+                rateLimitWarningShown = true;
+                showRateLimitWarning();
+            }
+            console.warn('LoreVault: Daily limit reached');
+            return;
+        }
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(error.error || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
         sessionStats.messagesSent += messages.length;
 
         if (result.events_created > 0) {
@@ -313,13 +363,37 @@ async function retrieveContext() {
     if (!chatId) return null;
 
     try {
-        const result = await apiCall('retrieve', 'POST', {
-            chat_id: chatId,
-            current_context: getRecentContext(5),
-            current_characters: getActiveCharacters(),
-            current_message_id: getCurrentMessageId(),
+        const response = await fetch(`${settings.apiBase}/retrieve`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'x-api-key': settings.apiKey,
+            },
+            body: JSON.stringify({
+                chat_id: chatId,
+                current_context: getRecentContext(5),
+                current_characters: getActiveCharacters(),
+                current_message_id: getCurrentMessageId(),
+            }),
         });
 
+        // Handle rate limit (402) - user hit daily limit
+        if (response.status === 402) {
+            if (!rateLimitWarningShown) {
+                rateLimitWarningShown = true;
+                showRateLimitWarning();
+            }
+            console.warn('LoreVault: Daily limit reached - memory retrieval paused');
+            return null;
+        }
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(error.error || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
         return result.context;
     } catch (error) {
         console.error('LoreVault retrieve failed:', error);
@@ -436,10 +510,30 @@ async function importCurrentChat() {
         for (let i = 0; i < messages.length; i += batchSize) {
             const batch = messages.slice(i, i + batchSize);
 
-            await apiCall('ingest', 'POST', {
-                chat_id: chatId,
-                messages: batch,
+            const response = await fetch(`${settings.apiBase}/ingest`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'x-api-key': settings.apiKey,
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    messages: batch,
+                }),
             });
+
+            // Handle rate limit during import
+            if (response.status === 402) {
+                showRateLimitWarning();
+                showMessage('warning', `Import stopped at ${processed} messages. Daily limit reached.`);
+                break;
+            }
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+                throw new Error(error.error || `HTTP ${response.status}`);
+            }
 
             processed += batch.length;
             const percent = Math.round((processed / messages.length) * 100);
