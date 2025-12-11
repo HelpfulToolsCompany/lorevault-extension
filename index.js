@@ -553,6 +553,113 @@ async function importCurrentChat() {
     }
 }
 
+// Fetch and display stored chats list
+async function loadStoredChats() {
+    const chatsList = $('#lorevault-chats-list');
+    const refreshBtn = $('#lorevault-refresh-chats-btn');
+
+    refreshBtn.addClass('spinning');
+    chatsList.html('<div class="lorevault-chats-loading">Loading...</div>');
+
+    try {
+        const result = await apiCall('chats');
+
+        if (!result.chats || result.chats.length === 0) {
+            chatsList.html('<div class="lorevault-no-chats">No stored chats</div>');
+            return;
+        }
+
+        // Render chat list
+        let html = '';
+        for (const chat of result.chats) {
+            const chatIdDisplay = chat.chat_id.length > 30
+                ? chat.chat_id.substring(0, 30) + '...'
+                : chat.chat_id;
+            const lastUpdated = new Date(chat.last_updated).toLocaleDateString();
+
+            html += `
+                <div class="lorevault-chat-item" data-chat-id="${escapeHtml(chat.chat_id)}">
+                    <div class="lorevault-chat-info">
+                        <div class="lorevault-chat-id" title="${escapeHtml(chat.chat_id)}">${escapeHtml(chatIdDisplay)}</div>
+                        <div class="lorevault-chat-stats">${chat.event_count} events, ${chat.message_count} msgs - ${lastUpdated}</div>
+                    </div>
+                    <button class="lorevault-chat-delete-btn" title="Delete this chat's memory">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        chatsList.html(html);
+
+        // Attach delete handlers
+        chatsList.find('.lorevault-chat-delete-btn').on('click', async function() {
+            const chatItem = $(this).closest('.lorevault-chat-item');
+            const chatId = chatItem.data('chat-id');
+            await deleteChatById(chatId, chatItem);
+        });
+
+    } catch (error) {
+        console.error('LoreVault load chats failed:', error);
+        chatsList.html('<div class="lorevault-chats-loading">Failed to load chats</div>');
+    } finally {
+        refreshBtn.removeClass('spinning');
+    }
+}
+
+// Helper to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Delete a specific chat by ID
+async function deleteChatById(chatId, chatItem) {
+    const confirmed = confirm(
+        `Delete memory for chat "${chatId}"?\n\n` +
+        'This will remove all stored events and character data for this chat.'
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const settings = getSettings();
+        const response = await fetch(`${settings.apiBase}/delete`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'x-api-key': settings.apiKey,
+            },
+            body: JSON.stringify({ chat_id: chatId }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ error: 'Deletion failed' }));
+            throw new Error(error.error);
+        }
+
+        const result = await response.json();
+
+        // Remove from UI
+        chatItem.fadeOut(300, function() {
+            $(this).remove();
+
+            // Check if list is now empty
+            if ($('.lorevault-chat-item').length === 0) {
+                $('#lorevault-chats-list').html('<div class="lorevault-no-chats">No stored chats</div>');
+            }
+        });
+
+        showMessage('success', `Chat memory deleted. Freed ${formatBytes(result.storage_freed_bytes)}.`);
+        await testConnection(); // Refresh stats
+    } catch (error) {
+        console.error('LoreVault delete chat failed:', error);
+        showMessage('error', error.message);
+    }
+}
+
 // Delete all user data
 async function deleteAllData() {
     const confirmed = confirm(
@@ -742,6 +849,10 @@ jQuery(async () => {
 
     $('#lorevault-import-btn').on('click', async () => {
         await importCurrentChat();
+    });
+
+    $('#lorevault-refresh-chats-btn').on('click', async () => {
+        await loadStoredChats();
     });
 
     // Setup drawer toggle

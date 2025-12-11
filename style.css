@@ -550,3 +550,105 @@
     border: 1px solid #FF9800;
     color: #FFB74D;
 }
+
+/* Manage stored chats section */
+.lorevault-manage-chats {
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--SmartThemeBlurTintColor);
+    border-radius: 5px;
+}
+
+.lorevault-manage-chats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.lorevault-btn-icon {
+    background: none;
+    border: none;
+    color: var(--SmartThemeBodyColor);
+    cursor: pointer;
+    padding: 5px 8px;
+    border-radius: 3px;
+    opacity: 0.7;
+}
+
+.lorevault-btn-icon:hover {
+    opacity: 1;
+    background: var(--SmartThemeBorderColor);
+}
+
+.lorevault-btn-icon.spinning i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.lorevault-chats-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.lorevault-chats-loading {
+    text-align: center;
+    padding: 15px;
+    opacity: 0.6;
+    font-size: 0.9em;
+}
+
+.lorevault-chat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 5px;
+    background: var(--SmartThemeBotMesBlurTintColor);
+    border-radius: 4px;
+}
+
+.lorevault-chat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.lorevault-chat-id {
+    font-size: 0.85em;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lorevault-chat-stats {
+    font-size: 0.75em;
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+.lorevault-chat-delete-btn {
+    background: none;
+    border: none;
+    color: #f44336;
+    cursor: pointer;
+    padding: 5px 8px;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+.lorevault-chat-delete-btn:hover {
+    opacity: 1;
+}
+
+.lorevault-no-chats {
+    text-align: center;
+    padding: 15px;
+    opacity: 0.6;
+    font-size: 0.9em;
+}
