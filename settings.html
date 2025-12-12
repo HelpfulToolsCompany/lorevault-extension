@@ -131,6 +131,36 @@
                     </div>
                 </div>
 
+                <!-- Memory Browser -->
+                <div class="lorevault-memory-browser">
+                    <div class="lorevault-memory-browser-header">
+                        <span>Memory Browser</span>
+                        <button class="lorevault-btn-icon" id="lorevault-refresh-memories-btn" title="Refresh memories">
+                            <i class="fa-solid fa-sync"></i>
+                        </button>
+                    </div>
+                    <div class="lorevault-memory-filters">
+                        <select id="lorevault-memory-chat-filter" class="lorevault-select">
+                            <option value="">All Chats</option>
+                        </select>
+                        <select id="lorevault-memory-type-filter" class="lorevault-select">
+                            <option value="">All Types</option>
+                        </select>
+                    </div>
+                    <div class="lorevault-memories-list" id="lorevault-memories-list">
+                        <div class="lorevault-memories-loading">Click refresh to load memories</div>
+                    </div>
+                    <div class="lorevault-memory-pagination" id="lorevault-memory-pagination" style="display: none;">
+                        <button class="lorevault-btn-icon" id="lorevault-memories-prev" title="Previous page">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <span id="lorevault-memories-page-info">Page 1</span>
+                        <button class="lorevault-btn-icon" id="lorevault-memories-next" title="Next page">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Danger Zone -->
                 <div class="lorevault-danger-zone">
                     <div class="lorevault-danger-header">Danger Zone</div>

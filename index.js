@@ -614,6 +614,194 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Memory browser state
+let memoryBrowserState = {
+    currentPage: 0,
+    pageSize: 20,
+    total: 0,
+    chatFilter: '',
+    typeFilter: '',
+    chatOptions: [],
+    typeOptions: [],
+};
+
+// Fetch and display memories
+async function loadMemories(resetPage = false) {
+    if (resetPage) {
+        memoryBrowserState.currentPage = 0;
+    }
+
+    const memoriesList = $('#lorevault-memories-list');
+    const refreshBtn = $('#lorevault-refresh-memories-btn');
+    const pagination = $('#lorevault-memory-pagination');
+
+    refreshBtn.addClass('spinning');
+    memoriesList.html('<div class="lorevault-memories-loading">Loading memories...</div>');
+
+    try {
+        const offset = memoryBrowserState.currentPage * memoryBrowserState.pageSize;
+        let url = `memories?limit=${memoryBrowserState.pageSize}&offset=${offset}`;
+
+        if (memoryBrowserState.chatFilter) {
+            url += `&chat_id=${encodeURIComponent(memoryBrowserState.chatFilter)}`;
+        }
+        if (memoryBrowserState.typeFilter) {
+            url += `&event_type=${encodeURIComponent(memoryBrowserState.typeFilter)}`;
+        }
+
+        const result = await apiCall(url);
+
+        memoryBrowserState.total = result.total;
+        memoryBrowserState.typeOptions = result.event_types || [];
+
+        // Update type filter options
+        const typeSelect = $('#lorevault-memory-type-filter');
+        const currentTypeValue = typeSelect.val();
+        typeSelect.html('<option value="">All Types</option>');
+        for (const type of memoryBrowserState.typeOptions) {
+            typeSelect.append(`<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`);
+        }
+        typeSelect.val(currentTypeValue);
+
+        if (!result.memories || result.memories.length === 0) {
+            memoriesList.html('<div class="lorevault-no-memories">No memories found</div>');
+            pagination.hide();
+            return;
+        }
+
+        // Render memories
+        let html = '';
+        for (const memory of result.memories) {
+            const dateStr = new Date(memory.created_at).toLocaleDateString();
+            const typeClass = memory.event_type ? memory.event_type.toLowerCase() : '';
+            const chatIdShort = memory.chat_id.length > 20
+                ? memory.chat_id.substring(0, 20) + '...'
+                : memory.chat_id;
+
+            html += `
+                <div class="lorevault-memory-item" data-memory-id="${escapeHtml(memory.id)}">
+                    <div class="lorevault-memory-header">
+                        <span class="lorevault-memory-type ${escapeHtml(typeClass)}">${escapeHtml(memory.event_type || 'event')}</span>
+                        <button class="lorevault-memory-delete-btn" title="Delete this memory">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="lorevault-memory-summary">${escapeHtml(memory.summary)}</div>
+                    <div class="lorevault-memory-meta">
+                        <span class="lorevault-memory-meta-item" title="${escapeHtml(memory.chat_id)}">
+                            <i class="fa-solid fa-comments"></i> ${escapeHtml(chatIdShort)}
+                        </span>
+                        <span class="lorevault-memory-meta-item">
+                            <i class="fa-solid fa-calendar"></i> ${dateStr}
+                        </span>
+                        ${memory.location ? `<span class="lorevault-memory-meta-item"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(memory.location)}</span>` : ''}
+                    </div>
+                    ${memory.characters_involved && memory.characters_involved.length > 0 ? `
+                        <div class="lorevault-memory-characters">
+                            ${memory.characters_involved.map(c => `<span class="lorevault-character-tag">${escapeHtml(c)}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        memoriesList.html(html);
+
+        // Attach delete handlers
+        memoriesList.find('.lorevault-memory-delete-btn').on('click', async function() {
+            const memoryItem = $(this).closest('.lorevault-memory-item');
+            const memoryId = memoryItem.data('memory-id');
+            await deleteMemory(memoryId, memoryItem);
+        });
+
+        // Update pagination
+        const totalPages = Math.ceil(memoryBrowserState.total / memoryBrowserState.pageSize);
+        if (totalPages > 1) {
+            $('#lorevault-memories-page-info').text(`Page ${memoryBrowserState.currentPage + 1} of ${totalPages}`);
+            $('#lorevault-memories-prev').prop('disabled', memoryBrowserState.currentPage === 0);
+            $('#lorevault-memories-next').prop('disabled', memoryBrowserState.currentPage >= totalPages - 1);
+            pagination.show();
+        } else {
+            pagination.hide();
+        }
+
+    } catch (error) {
+        console.error('LoreVault load memories failed:', error);
+        memoriesList.html('<div class="lorevault-memories-loading">Failed to load memories</div>');
+    } finally {
+        refreshBtn.removeClass('spinning');
+    }
+}
+
+// Delete a single memory
+async function deleteMemory(memoryId, memoryItem) {
+    const confirmed = confirm('Delete this memory?\n\nThis cannot be undone.');
+
+    if (!confirmed) return;
+
+    try {
+        const settings = getSettings();
+        const response = await fetch(`${settings.apiBase}/memories`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'x-api-key': settings.apiKey,
+            },
+            body: JSON.stringify({ memory_id: memoryId }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ error: 'Deletion failed' }));
+            throw new Error(error.error);
+        }
+
+        const result = await response.json();
+
+        // Remove from UI with animation
+        memoryItem.fadeOut(300, function() {
+            $(this).remove();
+
+            // Update total and check if we need to reload
+            memoryBrowserState.total--;
+            if ($('.lorevault-memory-item').length === 0 && memoryBrowserState.currentPage > 0) {
+                memoryBrowserState.currentPage--;
+                loadMemories();
+            } else if ($('.lorevault-memory-item').length === 0) {
+                $('#lorevault-memories-list').html('<div class="lorevault-no-memories">No memories found</div>');
+                $('#lorevault-memory-pagination').hide();
+            }
+        });
+
+        showMessage('success', `Memory deleted. Freed ${formatBytes(result.storage_freed_bytes)}.`);
+        await testConnection(); // Refresh stats
+
+    } catch (error) {
+        console.error('LoreVault delete memory failed:', error);
+        showMessage('error', error.message);
+    }
+}
+
+// Populate chat filter dropdown from stored chats
+async function populateChatFilter() {
+    try {
+        const result = await apiCall('chats');
+        const chatSelect = $('#lorevault-memory-chat-filter');
+        chatSelect.html('<option value="">All Chats</option>');
+
+        if (result.chats && result.chats.length > 0) {
+            for (const chat of result.chats) {
+                const chatIdShort = chat.chat_id.length > 25
+                    ? chat.chat_id.substring(0, 25) + '...'
+                    : chat.chat_id;
+                chatSelect.append(`<option value="${escapeHtml(chat.chat_id)}">${escapeHtml(chatIdShort)}</option>`);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to populate chat filter:', error);
+    }
+}
+
 // Delete a specific chat by ID
 async function deleteChatById(chatId, chatItem) {
     const confirmed = confirm(
@@ -853,6 +1041,37 @@ jQuery(async () => {
 
     $('#lorevault-refresh-chats-btn').on('click', async () => {
         await loadStoredChats();
+    });
+
+    // Memory browser handlers
+    $('#lorevault-refresh-memories-btn').on('click', async () => {
+        await populateChatFilter();
+        await loadMemories(true);
+    });
+
+    $('#lorevault-memory-chat-filter').on('change', function() {
+        memoryBrowserState.chatFilter = $(this).val();
+        loadMemories(true);
+    });
+
+    $('#lorevault-memory-type-filter').on('change', function() {
+        memoryBrowserState.typeFilter = $(this).val();
+        loadMemories(true);
+    });
+
+    $('#lorevault-memories-prev').on('click', () => {
+        if (memoryBrowserState.currentPage > 0) {
+            memoryBrowserState.currentPage--;
+            loadMemories();
+        }
+    });
+
+    $('#lorevault-memories-next').on('click', () => {
+        const totalPages = Math.ceil(memoryBrowserState.total / memoryBrowserState.pageSize);
+        if (memoryBrowserState.currentPage < totalPages - 1) {
+            memoryBrowserState.currentPage++;
+            loadMemories();
+        }
     });
 
     // Setup drawer toggle

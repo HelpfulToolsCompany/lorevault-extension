@@ -652,3 +652,180 @@
     opacity: 0.6;
     font-size: 0.9em;
 }
+
+/* Memory Browser */
+.lorevault-memory-browser {
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--SmartThemeBlurTintColor);
+    border-radius: 5px;
+}
+
+.lorevault-memory-browser-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.lorevault-memory-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.lorevault-select {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 4px;
+    background: var(--SmartThemeBotMesBlurTintColor);
+    color: var(--SmartThemeBodyColor);
+    font-size: 0.85em;
+    cursor: pointer;
+}
+
+.lorevault-memories-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.lorevault-memories-loading {
+    text-align: center;
+    padding: 15px;
+    opacity: 0.6;
+    font-size: 0.9em;
+}
+
+.lorevault-memory-item {
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: var(--SmartThemeBotMesBlurTintColor);
+    border-radius: 5px;
+    border-left: 3px solid var(--SmartThemeQuoteColor);
+}
+
+.lorevault-memory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+
+.lorevault-memory-type {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.7em;
+    font-weight: bold;
+    text-transform: uppercase;
+    background: var(--SmartThemeQuoteColor);
+    color: var(--SmartThemeBodyColor);
+    opacity: 0.9;
+}
+
+.lorevault-memory-type.action {
+    background: #2196F3;
+    color: white;
+}
+
+.lorevault-memory-type.dialogue {
+    background: #9C27B0;
+    color: white;
+}
+
+.lorevault-memory-type.revelation {
+    background: #FF9800;
+    color: white;
+}
+
+.lorevault-memory-type.emotion {
+    background: #E91E63;
+    color: white;
+}
+
+.lorevault-memory-type.relationship {
+    background: #F44336;
+    color: white;
+}
+
+.lorevault-memory-type.plot {
+    background: #4CAF50;
+    color: white;
+}
+
+.lorevault-memory-delete-btn {
+    background: none;
+    border: none;
+    color: #f44336;
+    cursor: pointer;
+    padding: 3px 6px;
+    opacity: 0.6;
+    font-size: 0.85em;
+}
+
+.lorevault-memory-delete-btn:hover {
+    opacity: 1;
+}
+
+.lorevault-memory-summary {
+    font-size: 0.9em;
+    line-height: 1.4;
+    margin-bottom: 6px;
+}
+
+.lorevault-memory-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.75em;
+    opacity: 0.7;
+}
+
+.lorevault-memory-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.lorevault-memory-meta-item i {
+    font-size: 0.9em;
+}
+
+.lorevault-memory-characters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.lorevault-character-tag {
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.7em;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid var(--SmartThemeBorderColor);
+}
+
+.lorevault-memory-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--SmartThemeBorderColor);
+}
+
+.lorevault-memory-pagination span {
+    font-size: 0.85em;
+    opacity: 0.8;
+}
+
+.lorevault-no-memories {
+    text-align: center;
+    padding: 20px;
+    opacity: 0.6;
+    font-size: 0.9em;
+}
