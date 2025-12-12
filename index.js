@@ -205,11 +205,11 @@ async function testConnection() {
         $('#lorevault-messages-count').text(formatNumber(usage.total_messages_processed));
         $('#lorevault-chats-count').text(usage.chats);
 
-        // Show/hide beta notice based on tier (upgrade button hidden during beta)
+        // Show/hide upgrade button based on tier (only show for free users)
         if (usage.tier === 'free') {
-            $('#lorevault-beta-notice').show();
+            $('#lorevault-upgrade-btn').show();
         } else {
-            $('#lorevault-beta-notice').hide();
+            $('#lorevault-upgrade-btn').hide();
         }
 
         setConnectionStatus('connected', `Connected (${usage.tier})`);
