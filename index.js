@@ -125,8 +125,23 @@ function showRateLimitWarning() {
         connectedSection.prepend(warningHtml);
     }
 
-    // Also show a toast notification
-    showMessage('warning', 'Daily event limit reached. New memories won\'t be stored until tomorrow.');
+    // Show SillyTavern toast notification (more visible)
+    if (typeof toastr !== 'undefined') {
+        toastr.warning(
+            'Daily extraction limit reached. Upgrade to Pro for unlimited memory storage.',
+            'LoreVault',
+            { timeOut: 10000, extendedTimeOut: 15000, preventDuplicates: true }
+        );
+    }
+
+    // Also update the daily usage bar to show limit reached
+    const dailyUsageFill = $('#lorevault-daily-usage-fill');
+    const dailyUsageHint = $('#lorevault-daily-usage-hint');
+    const dailyUsageHintText = $('#lorevault-daily-usage-hint-text');
+
+    dailyUsageFill.css('width', '100%').removeClass('warning').addClass('danger');
+    dailyUsageHint.show().addClass('limit-reached');
+    dailyUsageHintText.text('Limit reached! Upgrade to Pro for unlimited extractions.');
 }
 
 // Format bytes to human readable
