@@ -145,6 +145,51 @@ function formatNumber(num) {
     return num.toString();
 }
 
+// Update daily usage bar
+function updateDailyUsageBar(usage) {
+    const dailyUsageContainer = $('#lorevault-daily-usage');
+    const dailyUsageFill = $('#lorevault-daily-usage-fill');
+    const dailyUsageText = $('#lorevault-daily-usage-text');
+    const dailyUsageHint = $('#lorevault-daily-usage-hint');
+    const dailyUsageHintText = $('#lorevault-daily-usage-hint-text');
+
+    // Hide for pro users (unlimited)
+    if (usage.tier !== 'free' || usage.summarizations_limit === -1) {
+        dailyUsageContainer.hide();
+        return;
+    }
+
+    dailyUsageContainer.show();
+
+    const used = usage.summarizations_today || 0;
+    const limit = usage.summarizations_limit || 50;
+    const percent = Math.min(100, Math.round((used / limit) * 100));
+
+    // Update text and bar
+    dailyUsageText.text(`${used} / ${limit}`);
+    dailyUsageFill.css('width', `${percent}%`);
+
+    // Update bar color based on usage
+    dailyUsageFill.removeClass('warning danger');
+    if (percent >= 100) {
+        dailyUsageFill.addClass('danger');
+    } else if (percent >= 80) {
+        dailyUsageFill.addClass('warning');
+    }
+
+    // Show hint based on usage level
+    dailyUsageHint.removeClass('limit-reached');
+    if (percent >= 100) {
+        dailyUsageHint.show().addClass('limit-reached');
+        dailyUsageHintText.text('Limit reached! Upgrade to Pro for unlimited extractions.');
+    } else if (percent >= 80) {
+        dailyUsageHint.show();
+        dailyUsageHintText.text(`Only ${limit - used} left today. Upgrade to Pro for unlimited.`);
+    } else {
+        dailyUsageHint.hide();
+    }
+}
+
 // API call helper
 async function apiCall(endpoint, method = 'GET', body = null) {
     const settings = getSettings();
@@ -211,6 +256,9 @@ async function testConnection() {
         } else {
             $('#lorevault-upgrade-btn').hide();
         }
+
+        // Update daily usage bar (free tier only)
+        updateDailyUsageBar(usage);
 
         setConnectionStatus('connected', `Connected (${usage.tier})`);
         return true;

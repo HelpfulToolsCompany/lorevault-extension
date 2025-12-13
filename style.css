@@ -145,6 +145,65 @@
     background: linear-gradient(90deg, #f44336, #E91E63);
 }
 
+/* Daily usage bar */
+.lorevault-daily-usage {
+    margin: 15px 0;
+}
+
+.lorevault-daily-usage-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.lorevault-daily-usage-track {
+    height: 8px;
+    background: var(--SmartThemeBlurTintColor);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.lorevault-daily-usage-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.lorevault-daily-usage-fill.warning {
+    background: linear-gradient(90deg, #FFC107, #FF9800);
+}
+
+.lorevault-daily-usage-fill.danger {
+    background: linear-gradient(90deg, #f44336, #E91E63);
+}
+
+.lorevault-daily-usage-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: rgba(255, 152, 0, 0.15);
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: #FFB74D;
+}
+
+.lorevault-daily-usage-hint i {
+    color: #FF9800;
+}
+
+.lorevault-daily-usage-hint.limit-reached {
+    background: rgba(244, 67, 54, 0.15);
+    color: #ef9a9a;
+}
+
+.lorevault-daily-usage-hint.limit-reached i {
+    color: #f44336;
+}
+
 /* Stats display */
 .lorevault-stats {
     display: grid;
