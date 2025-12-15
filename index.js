@@ -106,13 +106,23 @@ function showMessage(type, message) {
     setTimeout(() => messageArea.html(''), 5000);
 }
 
-// Show rate limit warning banner
-function showRateLimitWarning() {
+// Show limit warning banner (storage or daily limit)
+function showLimitWarning(errorMessage = '') {
+    const isStorageLimit = errorMessage.toLowerCase().includes('storage');
+
+    const bannerText = isStorageLimit
+        ? 'Storage limit reached! Memory storage paused. Existing memories still work.'
+        : 'Daily limit reached! Memory storage paused. Existing memories still work.';
+
+    const toastText = isStorageLimit
+        ? 'Storage limit reached. Upgrade to Pro for more storage.'
+        : 'Daily extraction limit reached. Upgrade to Pro for unlimited memory storage.';
+
     // Show persistent warning in settings panel
     const warningHtml = `
         <div class="lorevault-rate-limit-banner" id="lorevault-rate-limit-banner">
             <i class="fa-solid fa-triangle-exclamation"></i>
-            <span>Daily limit reached! Memory storage paused. Existing memories still work.</span>
+            <span>${bannerText}</span>
             <button class="lorevault-banner-close" onclick="this.parentElement.remove()">
                 <i class="fa-solid fa-xmark"></i>
             </button>
@@ -128,20 +138,32 @@ function showRateLimitWarning() {
     // Show SillyTavern toast notification (more visible)
     if (typeof toastr !== 'undefined') {
         toastr.warning(
-            'Daily extraction limit reached. Upgrade to Pro for unlimited memory storage.',
+            toastText,
             'LoreVault',
             { timeOut: 10000, extendedTimeOut: 15000, preventDuplicates: true }
         );
     }
 
-    // Also update the daily usage bar to show limit reached
-    const dailyUsageFill = $('#lorevault-daily-usage-fill');
-    const dailyUsageHint = $('#lorevault-daily-usage-hint');
-    const dailyUsageHintText = $('#lorevault-daily-usage-hint-text');
+    // Update the appropriate bar based on limit type
+    if (isStorageLimit) {
+        // Update storage bar to show limit reached
+        const storageFill = $('#lorevault-storage-fill');
+        storageFill.css('width', '100%').removeClass('warning').addClass('danger');
+    } else {
+        // Update the daily usage bar to show limit reached
+        const dailyUsageFill = $('#lorevault-daily-usage-fill');
+        const dailyUsageHint = $('#lorevault-daily-usage-hint');
+        const dailyUsageHintText = $('#lorevault-daily-usage-hint-text');
 
-    dailyUsageFill.css('width', '100%').removeClass('warning').addClass('danger');
-    dailyUsageHint.show().addClass('limit-reached');
-    dailyUsageHintText.text('Limit reached! Upgrade to Pro for unlimited extractions.');
+        dailyUsageFill.css('width', '100%').removeClass('warning').addClass('danger');
+        dailyUsageHint.show().addClass('limit-reached');
+        dailyUsageHintText.text('Limit reached! Upgrade to Pro for unlimited extractions.');
+    }
+}
+
+// Backward compatible alias
+function showRateLimitWarning(errorMessage = '') {
+    showLimitWarning(errorMessage);
 }
 
 // Format bytes to human readable
@@ -389,13 +411,14 @@ async function ingestMessages(messages) {
             }),
         });
 
-        // Handle rate limit (402)
+        // Handle limit reached (402) - could be daily or storage limit
         if (response.status === 402) {
+            const errorData = await response.json().catch(() => ({ error: 'Limit reached' }));
             if (!rateLimitWarningShown) {
                 rateLimitWarningShown = true;
-                showRateLimitWarning();
+                showRateLimitWarning(errorData.error || '');
             }
-            console.warn('LoreVault: Daily limit reached');
+            console.warn('LoreVault: Limit reached -', errorData.error);
             return;
         }
 
@@ -441,13 +464,14 @@ async function retrieveContext() {
             }),
         });
 
-        // Handle rate limit (402) - user hit daily limit
+        // Handle limit reached (402) - could be daily or storage limit
         if (response.status === 402) {
+            const errorData = await response.json().catch(() => ({ error: 'Limit reached' }));
             if (!rateLimitWarningShown) {
                 rateLimitWarningShown = true;
-                showRateLimitWarning();
+                showRateLimitWarning(errorData.error || '');
             }
-            console.warn('LoreVault: Daily limit reached - memory retrieval paused');
+            console.warn('LoreVault: Limit reached -', errorData.error);
             return null;
         }
 
@@ -586,10 +610,12 @@ async function importCurrentChat() {
                 }),
             });
 
-            // Handle rate limit during import
+            // Handle limit reached during import
             if (response.status === 402) {
-                showRateLimitWarning();
-                showMessage('warning', `Import stopped at ${processed} messages. Daily limit reached.`);
+                const errorData = await response.json().catch(() => ({ error: 'Limit reached' }));
+                const isStorage = (errorData.error || '').toLowerCase().includes('storage');
+                showRateLimitWarning(errorData.error || '');
+                showMessage('warning', `Import stopped at ${processed} messages. ${isStorage ? 'Storage' : 'Daily'} limit reached.`);
                 break;
             }
 
