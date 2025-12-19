@@ -271,6 +271,17 @@
     background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
 
+.lorevault-btn-manage {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.lorevault-btn-manage:hover {
+    background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+}
+
 /* Toggle switch */
 .lorevault-toggle {
     display: flex;

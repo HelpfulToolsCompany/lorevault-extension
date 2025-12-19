@@ -288,10 +288,13 @@ async function testConnection() {
         $('#lorevault-chats-count').text(usage.chats);
 
         // Show/hide upgrade button based on tier (only show for free users)
+        // Show manage subscription button for pro users
         if (usage.tier === 'free') {
             $('#lorevault-upgrade-btn').show();
+            $('#lorevault-manage-subscription-btn').hide();
         } else {
             $('#lorevault-upgrade-btn').hide();
+            $('#lorevault-manage-subscription-btn').show();
         }
 
         // Update daily usage bar (free tier only)
@@ -497,6 +500,21 @@ async function openUpgrade() {
         }
     } catch (error) {
         console.error('LoreVault checkout failed:', error);
+        showMessage('error', error.message);
+    }
+}
+
+// Open Stripe billing portal for subscription management
+async function openBillingPortal() {
+    try {
+        const result = await apiCall('billing-portal', 'POST', {
+            return_url: window.location.href
+        });
+        if (result.url) {
+            window.open(result.url, '_blank');
+        }
+    } catch (error) {
+        console.error('LoreVault billing portal failed:', error);
         showMessage('error', error.message);
     }
 }
@@ -1114,6 +1132,10 @@ jQuery(async () => {
 
     $('#lorevault-upgrade-btn').on('click', async () => {
         await openUpgrade();
+    });
+
+    $('#lorevault-manage-subscription-btn').on('click', async () => {
+        await openBillingPortal();
     });
 
     $('#lorevault-delete-chat-btn').on('click', async () => {
