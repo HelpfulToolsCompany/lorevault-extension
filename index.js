@@ -305,6 +305,16 @@ async function testConnection() {
     } catch (error) {
         console.error('LoreVault connection test failed:', error);
         setConnectionStatus('disconnected', error.message);
+
+        // If API key is invalid, clear it and show registration form
+        if (error.message.includes('Invalid API key') || error.message.includes('401')) {
+            console.log('LoreVault: Invalid API key detected, clearing settings');
+            extension_settings[extensionName].apiKey = '';
+            saveSettings();
+            updateUIState();
+            showMessage('error', 'Your API key is invalid. Please register again.');
+        }
+
         return false;
     }
 }
