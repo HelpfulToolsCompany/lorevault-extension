@@ -363,13 +363,25 @@ async function registerUser(email) {
 function getCurrentChatId() {
     const context = getContext();
     if (!context.chatId) return null;
-    return `${context.characterId || 'unknown'}_${context.chatId}`;
+    // For group chats, use groupId if available
+    const prefix = context.groupId || context.characterId || 'unknown';
+    return `${prefix}_${context.chatId}`;
 }
 
-// Get current character name
+// Get current character name (for backward compatibility - use getSpeakerName for individual messages)
 function getCurrentCharacterName() {
     const context = getContext();
     return context.name2 || context.characterId || 'Character';
+}
+
+// Get speaker name from a message (handles group chats)
+function getSpeakerName(msg, context) {
+    if (msg.is_user) {
+        return context.name1 || 'User';
+    }
+    // In group chats, msg.name contains the character name
+    // In regular chats, msg.name might be undefined, fall back to context.name2
+    return msg.name || context.name2 || context.characterId || 'Character';
 }
 
 // Get recent messages as a single context string for v1.1 API
@@ -388,15 +400,32 @@ function getCurrentMessageId() {
     return chat.length;
 }
 
-// Get active characters from recent messages
+// Get active characters from recent messages (handles group chats)
 function getActiveCharacters() {
     const context = getContext();
-    const characterName = getCurrentCharacterName();
-    const characters = new Set([characterName]);
+    const chat = context.chat || [];
+    const characters = new Set();
 
-    // Also add "You" or the user persona name
-    if (context.name1) {
-        characters.add(context.name1);
+    // Collect speakers from recent messages (last 20)
+    const recentMessages = chat.slice(-20);
+    for (const msg of recentMessages) {
+        const speaker = getSpeakerName(msg, context);
+        if (speaker) {
+            characters.add(speaker);
+        }
+    }
+
+    // Fallback: if no messages yet, add context characters
+    if (characters.size === 0) {
+        if (context.name2) characters.add(context.name2);
+        if (context.name1) characters.add(context.name1);
+        // For group chats, add group members if available
+        if (context.groups && context.groupId) {
+            const group = context.groups.find(g => g.id === context.groupId);
+            if (group && group.members) {
+                group.members.forEach(member => characters.add(member.name || member));
+            }
+        }
     }
 
     return Array.from(characters);
@@ -607,15 +636,13 @@ async function importCurrentChat() {
     $('#lorevault-import-fill').css('width', '0%');
 
     try {
-        const characterName = getCurrentCharacterName();
-        const userName = context.name1 || 'User';
-
         // Convert all messages to v1.1 format
+        // Use getSpeakerName to handle group chats correctly
         const messages = chat.map((msg, index) => ({
             message_id: index + 1,
             role: msg.is_user ? 'user' : 'assistant',
             content: msg.mes || '',
-            speaker: msg.is_user ? userName : characterName,
+            speaker: getSpeakerName(msg, context),
         }));
 
         // Send in batches of 20 to avoid overwhelming the API
@@ -1035,7 +1062,7 @@ function setupMessageHooks() {
             message_id: chat.length,
             role: latestMessage.is_user ? 'user' : 'assistant',
             content: latestMessage.mes || '',
-            speaker: latestMessage.is_user ? (context.name1 || 'User') : getCurrentCharacterName(),
+            speaker: getSpeakerName(latestMessage, context),
         };
 
         // Ingest the message
@@ -1058,7 +1085,7 @@ function setupMessageHooks() {
             message_id: chat.length,
             role: 'assistant',
             content: latestMessage.mes || '',
-            speaker: getCurrentCharacterName(),
+            speaker: getSpeakerName(latestMessage, context),
         };
 
         // Ingest the message
