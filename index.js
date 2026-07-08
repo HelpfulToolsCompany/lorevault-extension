@@ -14,6 +14,8 @@ const defaultSettings = {
     apiKey: '',
     enabled: true,
     tokenBudget: 1000,
+    povEnabled: false,
+    firstMemoryCelebrated: false,
     apiBase: 'https://ukkkdooyoerpgwpctkqi.supabase.co/functions/v1',
 };
 
@@ -29,6 +31,15 @@ let sessionStats = {
 // Track rate limit warnings (don't spam user)
 let rateLimitWarningShown = false;
 
+// Current tier as reported by the backend (drives Pro-only UI)
+let currentTier = 'free';
+
+// Throttle sync-failure notifications (once per 5 min per kind)
+const syncFailureNotifiedAt = {};
+
+// Last ingested message per chat, to skip duplicate re-fires on swipes/regens
+const lastIngestKeys = new Map();
+
 // Load settings from SillyTavern storage
 async function loadSettings() {
     extension_settings[extensionName] = extension_settings[extensionName] || {};
@@ -39,15 +50,22 @@ async function loadSettings() {
     // Update UI with loaded settings
     $('#lorevault-api-key').val(extension_settings[extensionName].apiKey || '');
     $('#lorevault-enabled').prop('checked', extension_settings[extensionName].enabled);
+    $('#lorevault-pov-enabled').prop('checked', extension_settings[extensionName].povEnabled === true);
     $('#lorevault-token-budget').val(extension_settings[extensionName].tokenBudget || 1000);
     $('#lorevault-token-budget-value').text(extension_settings[extensionName].tokenBudget || 1000);
 
     // Show/hide sections based on API key
     updateUIState();
 
-    // Test connection if API key exists
+    // Test connection if API key exists, then auto-load stored data
+    // so users immediately see their memories are real
     if (extension_settings[extensionName].apiKey) {
-        await testConnection();
+        const connected = await testConnection();
+        if (connected) {
+            populateChatFilter();
+            loadMemories(true);
+            loadStoredChats();
+        }
     }
 }
 
@@ -166,6 +184,70 @@ function showRateLimitWarning(errorMessage = '') {
     showLimitWarning(errorMessage);
 }
 
+// Surface a memory-sync failure visibly (banner + toast + red dot),
+// throttled to once per 5 minutes per kind so it doesn't spam every message.
+function notifySyncFailure(kind, error) {
+    console.error(`LoreVault ${kind} failed:`, error);
+
+    const now = Date.now();
+    if (syncFailureNotifiedAt[kind] && now - syncFailureNotifiedAt[kind] < 5 * 60 * 1000) {
+        return;
+    }
+    syncFailureNotifiedAt[kind] = now;
+
+    setConnectionStatus('disconnected', 'Memory sync failing');
+
+    const bannerText = kind === 'ingest'
+        ? 'Memory capture is failing — new messages are NOT being remembered.'
+        : 'Memory retrieval is failing — past memories are not being injected.';
+
+    if (!$('#lorevault-sync-error-banner').length) {
+        $('#lorevault-connected-section').prepend(`
+            <div class="lorevault-rate-limit-banner" id="lorevault-sync-error-banner">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>${bannerText} (${escapeHtml(error.message || 'connection error')})</span>
+                <button class="lorevault-banner-close" onclick="this.parentElement.remove()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        `);
+    }
+
+    if (typeof toastr !== 'undefined') {
+        toastr.error(
+            `${bannerText} Check the LoreVault panel in Extensions.`,
+            'LoreVault',
+            { timeOut: 10000, preventDuplicates: true }
+        );
+    }
+}
+
+// Clear the sync-failure state after a successful sync
+function clearSyncFailure() {
+    if ($('#lorevault-sync-error-banner').length) {
+        $('#lorevault-sync-error-banner').remove();
+        setConnectionStatus('connected', `Connected (${currentTier})`);
+    }
+}
+
+// Celebrate the first memory ever captured — the "it's working!" moment
+function celebrateFirstMemory(result) {
+    const settings = getSettings();
+    if (settings.firstMemoryCelebrated) return;
+
+    extension_settings[extensionName].firstMemoryCelebrated = true;
+    saveSettings();
+
+    if (typeof toastr !== 'undefined') {
+        toastr.success(
+            `LoreVault captured its first memory from this story! It will be recalled automatically when it becomes relevant. View all memories in the LoreVault panel.`,
+            '🎉 Memory active',
+            { timeOut: 12000 }
+        );
+    }
+    showMessage('success', 'First memory captured! LoreVault is working.');
+}
+
 // Format bytes to human readable
 function formatBytes(bytes) {
     if (bytes === 0) return '0 B';
@@ -263,11 +345,23 @@ async function testConnection() {
 
     try {
         const usage = await apiCall('usage');
+        currentTier = usage.tier || 'free';
 
         // Update tier badge
         const tierBadge = $('#lorevault-tier-badge');
-        tierBadge.removeClass('free pro premium').addClass(usage.tier);
-        tierBadge.text(usage.tier.toUpperCase());
+        tierBadge.removeClass('free pro premium').addClass(currentTier);
+        tierBadge.text(currentTier.toUpperCase());
+
+        // Re-arm the limit warning when usage is back under the cap
+        // (new day, upgrade, or freed storage)
+        const underDailyLimit = usage.summarizations_limit === -1
+            || (usage.summarizations_today || 0) < (usage.summarizations_limit || 50);
+        if (underDailyLimit && (usage.storage_percent || 0) < 100) {
+            rateLimitWarningShown = false;
+        }
+
+        // POV Memory is Pro-only: reflect that in the toggle
+        updatePovAvailability();
 
         // Update storage bar
         const storagePercent = usage.storage_percent || 0;
@@ -334,8 +428,8 @@ async function registerUser(email) {
         });
 
         if (!response.ok) {
-            const error = await response.json().catch(() => ({ error: 'Registration failed' }));
-            throw new Error(error.error);
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error || `Registration failed (HTTP ${response.status})`);
         }
 
         const data = await response.json();
@@ -471,14 +565,16 @@ async function ingestMessages(messages) {
 
         const result = await response.json();
         sessionStats.messagesSent += messages.length;
+        clearSyncFailure();
 
         if (result.events_created > 0) {
             console.log(`LoreVault: ${result.events_created} event(s) created, ${result.messages_stored} message(s) stored`);
+            celebrateFirstMemory(result);
         }
 
         return result;
     } catch (error) {
-        console.error('LoreVault ingest failed:', error);
+        notifySyncFailure('ingest', error);
     }
 }
 
@@ -503,6 +599,11 @@ async function retrieveContext() {
                 current_context: getRecentContext(5),
                 current_characters: getActiveCharacters(),
                 current_message_id: getCurrentMessageId(),
+                token_budget: settings.tokenBudget || 1000,
+                // POV Memory (Pro): retrieval limited to what this character witnessed
+                ...(settings.povEnabled && currentTier !== 'free'
+                    ? { pov_character: getCurrentCharacterName() }
+                    : {}),
             }),
         });
 
@@ -523,11 +624,61 @@ async function retrieveContext() {
         }
 
         const result = await response.json();
+        clearSyncFailure();
         return result.context;
     } catch (error) {
-        console.error('LoreVault retrieve failed:', error);
+        notifySyncFailure('retrieve', error);
         return null;
     }
+}
+
+// Enable/disable the POV Memory toggle based on tier
+function updatePovAvailability() {
+    const povToggle = $('#lorevault-pov-enabled');
+    const povHint = $('#lorevault-pov-hint');
+    if (currentTier === 'free') {
+        povToggle.prop('disabled', true).prop('checked', false);
+        povHint.text('Pro feature — characters only recall events they witnessed.');
+    } else {
+        povToggle.prop('disabled', false).prop('checked', getSettings().povEnabled === true);
+        povHint.text('Characters only recall events they witnessed. Secrets stay secret.');
+    }
+}
+
+// Poll for tier change after the user goes to Stripe checkout,
+// so Pro activates in the UI without a manual refresh.
+let upgradePollTimer = null;
+function pollForUpgrade() {
+    if (upgradePollTimer) clearInterval(upgradePollTimer);
+
+    const startedAt = Date.now();
+    upgradePollTimer = setInterval(async () => {
+        // Give up after 10 minutes
+        if (Date.now() - startedAt > 10 * 60 * 1000) {
+            clearInterval(upgradePollTimer);
+            upgradePollTimer = null;
+            return;
+        }
+
+        try {
+            const usage = await apiCall('usage');
+            if (usage.tier && usage.tier !== 'free') {
+                clearInterval(upgradePollTimer);
+                upgradePollTimer = null;
+                await testConnection();
+                if (typeof toastr !== 'undefined') {
+                    toastr.success(
+                        'Welcome to LoreVault Pro! Unlimited daily extractions, 1 GB of story memory, and POV Memory are now active.',
+                        '👑 Pro activated',
+                        { timeOut: 15000 }
+                    );
+                }
+                showMessage('success', 'Pro activated! Thank you for supporting LoreVault.');
+            }
+        } catch (e) {
+            // Transient failure while polling is fine; keep trying
+        }
+    }, 5000);
 }
 
 // Open upgrade checkout
@@ -536,6 +687,8 @@ async function openUpgrade() {
         const result = await apiCall('checkout', 'POST', { tier: 'pro' });
         if (result.checkout_url) {
             window.open(result.checkout_url, '_blank');
+            showMessage('info', 'Complete checkout in the new tab — Pro will activate here automatically.');
+            pollForUpgrade();
         }
     } catch (error) {
         console.error('LoreVault checkout failed:', error);
@@ -808,7 +961,10 @@ async function loadMemories(resetPage = false) {
         typeSelect.val(currentTypeValue);
 
         if (!result.memories || result.memories.length === 0) {
-            memoriesList.html('<div class="lorevault-no-memories">No memories found</div>');
+            const emptyText = (memoryBrowserState.chatFilter || memoryBrowserState.typeFilter)
+                ? 'No memories match these filters'
+                : 'No memories yet — as you chat, LoreVault extracts the moments that matter and shows them here.';
+            memoriesList.html(`<div class="lorevault-no-memories">${emptyText}</div>`);
             pagination.hide();
             return;
         }
@@ -1044,6 +1200,17 @@ async function deleteAllData() {
     }
 }
 
+// Skip re-ingesting the exact same message (swipe/regen re-fires the event
+// with the same id and content; genuinely new swipe content still ingests)
+function isDuplicateIngest(chatId, message) {
+    const key = `${message.message_id}:${message.role}:${message.content}`;
+    if (lastIngestKeys.get(chatId) === key) {
+        return true;
+    }
+    lastIngestKeys.set(chatId, key);
+    return false;
+}
+
 // Hook into SillyTavern message events
 function setupMessageHooks() {
     // Hook into message sent event (user messages)
@@ -1064,6 +1231,8 @@ function setupMessageHooks() {
             content: latestMessage.mes || '',
             speaker: getSpeakerName(latestMessage, context),
         };
+
+        if (isDuplicateIngest(getCurrentChatId(), message)) return;
 
         // Ingest the message
         await ingestMessages([message]);
@@ -1087,6 +1256,8 @@ function setupMessageHooks() {
             content: latestMessage.mes || '',
             speaker: getSpeakerName(latestMessage, context),
         };
+
+        if (isDuplicateIngest(getCurrentChatId(), message)) return;
 
         // Ingest the message
         await ingestMessages([message]);
@@ -1128,8 +1299,8 @@ jQuery(async () => {
     // Setup event handlers
     $('#lorevault-register-btn').on('click', async () => {
         const email = $('#lorevault-email').val().trim();
-        if (!email) {
-            showMessage('error', 'Please enter your email address');
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            showMessage('error', 'Please enter a valid email address');
             return;
         }
         const agreedToTerms = $('#lorevault-agree-terms').is(':checked');
@@ -1149,6 +1320,16 @@ jQuery(async () => {
 
     $('#lorevault-enabled').on('change', function () {
         extension_settings[extensionName].enabled = $(this).prop('checked');
+        saveSettings();
+    });
+
+    $('#lorevault-pov-enabled').on('change', function () {
+        if (currentTier === 'free') {
+            $(this).prop('checked', false);
+            showMessage('info', 'POV Memory is a Pro feature. Upgrade to enable it.');
+            return;
+        }
+        extension_settings[extensionName].povEnabled = $(this).prop('checked');
         saveSettings();
     });
 

@@ -51,6 +51,18 @@
                     <span>Enable LoreVault</span>
                 </div>
 
+                <!-- POV Memory Toggle (Pro) -->
+                <div class="lorevault-toggle">
+                    <label class="lorevault-toggle-switch">
+                        <input type="checkbox" id="lorevault-pov-enabled">
+                        <span class="lorevault-toggle-slider"></span>
+                    </label>
+                    <span>POV Memory <span class="lorevault-tier-badge pro">PRO</span></span>
+                </div>
+                <div class="lorevault-pov-hint" id="lorevault-pov-hint" style="font-size: 0.85em; opacity: 0.75; margin: -4px 0 8px 0;">
+                    Characters only recall events they witnessed. Secrets stay secret.
+                </div>
+
                 <!-- Storage Bar -->
                 <div class="lorevault-storage-bar">
                     <div class="lorevault-storage-bar-label">
@@ -144,7 +156,7 @@
                         </button>
                     </div>
                     <div class="lorevault-chats-list" id="lorevault-chats-list">
-                        <div class="lorevault-chats-loading">Click refresh to load chats</div>
+                        <div class="lorevault-chats-loading">No stored chats yet — open a chat and start writing, or use Import Current Chat.</div>
                     </div>
                 </div>
 
@@ -165,7 +177,7 @@
                         </select>
                     </div>
                     <div class="lorevault-memories-list" id="lorevault-memories-list">
-                        <div class="lorevault-memories-loading">Click refresh to load memories</div>
+                        <div class="lorevault-memories-loading">No memories yet — as you chat, LoreVault extracts the moments that matter and shows them here.</div>
                     </div>
                     <div class="lorevault-memory-pagination" id="lorevault-memory-pagination" style="display: none;">
                         <button class="lorevault-btn-icon" id="lorevault-memories-prev" title="Previous page">
